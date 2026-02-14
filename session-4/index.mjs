@@ -13,6 +13,16 @@
 //   API Gateway sets `event.routeKey` to a string like "GET /items/{id}".
 //   We use a switch statement to run the right database operation for each route.
 //
+// Best practices used here (from AWS Lambda docs):
+// - SDK clients initialized OUTSIDE the handler (reused across warm invocations)
+// - Table name from environment variable with hardcoded fallback
+// - Event logging for debugging via CloudWatch
+// - `finally` block ensures response body is always serialized
+// - Consistent error response format
+//
+// Note: In production, AWS recommends separate Lambda functions per route.
+// We use a single function here for workshop simplicity.
+//
 // Testing with curl (replace YOUR-API-ID with your actual API Gateway URL):
 //
 //   # Create an item
@@ -40,9 +50,11 @@ import {
 
 const client = new DynamoDBClient({});
 const dynamo = DynamoDBDocumentClient.from(client);
-const tableName = "http-crud-tutorial-items";
+const tableName = process.env.TABLE_NAME || "http-crud-tutorial-items";
 
-export const handler = async (event) => {
+export const handler = async (event, context) => {
+  console.log("Event:", JSON.stringify(event));
+
   let body;
   let statusCode = 200;
   const headers = { "Content-Type": "application/json" };
@@ -52,37 +64,45 @@ export const handler = async (event) => {
     switch (event.routeKey) {
       case "DELETE /items/{id}":
         // event.pathParameters.id contains the {id} from the URL
-        await dynamo.send(new DeleteCommand({
-          TableName: tableName,
-          Key: { id: event.pathParameters.id },
-        }));
-        body = { message: `Deleted item ${event.pathParameters.id}` };
+        await dynamo.send(
+          new DeleteCommand({
+            TableName: tableName,
+            Key: { id: event.pathParameters.id },
+          })
+        );
+        body = `Deleted item ${event.pathParameters.id}`;
         break;
 
       case "GET /items/{id}":
-        const getResult = await dynamo.send(new GetCommand({
-          TableName: tableName,
-          Key: { id: event.pathParameters.id },
-        }));
-        body = getResult.Item || { message: "Item not found" };
+        body = await dynamo.send(
+          new GetCommand({
+            TableName: tableName,
+            Key: { id: event.pathParameters.id },
+          })
+        );
+        body = body.Item;
         break;
 
       case "GET /items":
-        const scanResult = await dynamo.send(new ScanCommand({ TableName: tableName }));
-        body = scanResult.Items;
+        body = await dynamo.send(
+          new ScanCommand({ TableName: tableName })
+        );
+        body = body.Items;
         break;
 
       case "PUT /items":
         const requestJSON = JSON.parse(event.body);
-        await dynamo.send(new PutCommand({
-          TableName: tableName,
-          Item: {
-            id: requestJSON.id,
-            price: requestJSON.price,
-            name: requestJSON.name,
-          },
-        }));
-        body = { message: `Saved item ${requestJSON.id}` };
+        await dynamo.send(
+          new PutCommand({
+            TableName: tableName,
+            Item: {
+              id: requestJSON.id,
+              price: requestJSON.price,
+              name: requestJSON.name,
+            },
+          })
+        );
+        body = `Put item ${requestJSON.id}`;
         break;
 
       default:
@@ -90,8 +110,10 @@ export const handler = async (event) => {
     }
   } catch (err) {
     statusCode = 400;
-    body = { error: err.message };
+    body = err.message;
+  } finally {
+    body = JSON.stringify(body);
   }
 
-  return { statusCode, body: JSON.stringify(body), headers };
+  return { statusCode, body, headers };
 };

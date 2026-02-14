@@ -103,12 +103,27 @@ Go to the AWS Console in the `ap-southeast-1` (Singapore) region and delete in t
 3. **DynamoDB Table** — DynamoDB console → Tables → Select `http-crud-tutorial-items` → Delete table
 4. **CloudWatch Logs** — CloudWatch console → Log groups → Delete `/aws/lambda/hello-serverless`
 
+## Best Practices Used in This Repo
+
+The code in this repo follows [AWS Lambda best practices](https://docs.aws.amazon.com/lambda/latest/dg/best-practices.html) and aligns with the [official AWS CRUD HTTP API tutorial](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-dynamo-db.html):
+
+| Practice | What & Why |
+|----------|-----------|
+| **SDK clients outside handler** | `DynamoDBClient` is created once and reused across warm invocations — reduces cold start time |
+| **Environment variable for config** | `process.env.TABLE_NAME` with fallback — avoids hardcoding, easy to change per environment |
+| **`finally` block for serialization** | `JSON.stringify` always runs, even on error — matches the official AWS tutorial pattern |
+| **Event logging** | `console.log("Event:", ...)` — essential for debugging via CloudWatch Logs |
+| **Handler `context` parameter** | Standard `(event, context)` signature — gives access to request ID, memory limit, etc. |
+| **Single function (workshop only)** | In production, AWS recommends [one function per route](https://docs.aws.amazon.com/lambda/latest/dg/best-practices.html) for least-privilege IAM |
+
 ## Resources & Further Reading
 
+- [AWS CRUD HTTP API Tutorial](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-dynamo-db.html) — the official tutorial this workshop is based on
+- [AWS Lambda Best Practices](https://docs.aws.amazon.com/lambda/latest/dg/best-practices.html) — handler design, cold starts, permissions
 - [AWS Lambda Developer Guide](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html)
 - [Amazon API Gateway Developer Guide](https://docs.aws.amazon.com/apigateway/latest/developerguide/welcome.html)
 - [Amazon DynamoDB Developer Guide](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
 - [AWS SDK for JavaScript v3](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/)
-- [AWS Free Tier](https://aws.amazon.com/free/)
-- [AWS CRUD HTTP API Tutorial](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-dynamo-db.html) — the official tutorial this workshop is based on
 - [Serverless Land — Patterns](https://serverlessland.com/patterns) — real-world serverless architecture patterns
+- [AWS Serverless Patterns Workshop](https://catalog.workshops.aws/serverless-patterns/en-US) — advanced hands-on labs
+- [AWS Free Tier](https://aws.amazon.com/free/)

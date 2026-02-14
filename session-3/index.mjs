@@ -12,19 +12,30 @@
 // attribute format. For example, you can write { price: 999 } instead of
 // { price: { N: "999" } }.
 //
+// Best practices used here:
+// - SDK clients initialized OUTSIDE the handler (reused across invocations, avoids cold start overhead)
+// - Table name from environment variable with fallback (configure in Lambda > Configuration > Environment variables)
+// - Event logging for debugging via CloudWatch
+//
 // Note: The AWS SDK is pre-installed in Lambda — no need to npm install anything.
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 
-// Create the DynamoDB Document Client
+// Initialize clients outside the handler — they're reused across invocations
+// This is an AWS best practice that reduces cold start time
 const client = new DynamoDBClient({});
 const dynamo = DynamoDBDocumentClient.from(client);
 
-// This must match the table name you created in the DynamoDB console
-const tableName = "http-crud-tutorial-items";
+// Best practice: use an environment variable for the table name
+// Fallback to the hardcoded value for workshop simplicity
+const tableName = process.env.TABLE_NAME || "http-crud-tutorial-items";
 
-export const handler = async (event) => {
+export const handler = async (event, context) => {
+  console.log("Event:", JSON.stringify(event));
+
+  let body;
+  let statusCode = 200;
   const headers = { "Content-Type": "application/json" };
 
   try {
@@ -36,13 +47,18 @@ export const handler = async (event) => {
         TableName: tableName,
         Item: { id: item.id, name: item.name, price: item.price },
       }));
-      return { statusCode: 200, headers, body: JSON.stringify({ message: `Saved item ${item.id}` }) };
+      body = `Saved item ${item.id}`;
+    } else {
+      // If no body, list all items in the table
+      const result = await dynamo.send(new ScanCommand({ TableName: tableName }));
+      body = result.Items;
     }
-
-    // If no body, list all items in the table
-    const result = await dynamo.send(new ScanCommand({ TableName: tableName }));
-    return { statusCode: 200, headers, body: JSON.stringify(result.Items) };
   } catch (err) {
-    return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
+    statusCode = 500;
+    body = err.message;
+  } finally {
+    body = JSON.stringify(body);
   }
+
+  return { statusCode, headers, body };
 };

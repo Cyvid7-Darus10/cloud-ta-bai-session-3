@@ -40,9 +40,11 @@ import {
 
 const client = new DynamoDBClient({});
 const dynamo = DynamoDBDocumentClient.from(client);
-const tableName = "http-crud-tutorial-items";
+const tableName = process.env.TABLE_NAME || "http-crud-tutorial-items";
 
-export const handler = async (event) => {
+export const handler = async (event, context) => {
+  console.log("Event:", JSON.stringify(event));
+
   let body;
   let statusCode = 200;
   const headers = { "Content-Type": "application/json" };
@@ -50,49 +52,59 @@ export const handler = async (event) => {
   try {
     switch (event.routeKey) {
       case "DELETE /items/{id}":
-        await dynamo.send(new DeleteCommand({
-          TableName: tableName,
-          Key: { id: event.pathParameters.id },
-        }));
-        body = { message: `Deleted item ${event.pathParameters.id}` };
+        await dynamo.send(
+          new DeleteCommand({
+            TableName: tableName,
+            Key: { id: event.pathParameters.id },
+          })
+        );
+        body = `Deleted item ${event.pathParameters.id}`;
         break;
 
       case "GET /items/{id}":
-        const getResult = await dynamo.send(new GetCommand({
-          TableName: tableName,
-          Key: { id: event.pathParameters.id },
-        }));
-        body = getResult.Item || { message: "Item not found" };
+        body = await dynamo.send(
+          new GetCommand({
+            TableName: tableName,
+            Key: { id: event.pathParameters.id },
+          })
+        );
+        body = body.Item;
         break;
 
       case "GET /items":
-        const scanResult = await dynamo.send(new ScanCommand({ TableName: tableName }));
-        body = scanResult.Items;
+        body = await dynamo.send(
+          new ScanCommand({ TableName: tableName })
+        );
+        body = body.Items;
         break;
 
       case "PUT /items":
         const requestJSON = JSON.parse(event.body);
-        await dynamo.send(new PutCommand({
-          TableName: tableName,
-          Item: {
-            id: requestJSON.id,
-            price: requestJSON.price,
-            name: requestJSON.name,
-          },
-        }));
-        body = { message: `Saved item ${requestJSON.id}` };
+        await dynamo.send(
+          new PutCommand({
+            TableName: tableName,
+            Item: {
+              id: requestJSON.id,
+              price: requestJSON.price,
+              name: requestJSON.name,
+            },
+          })
+        );
+        body = `Put item ${requestJSON.id}`;
         break;
 
       // --- Challenge: PATCH /items/{id} — Update only the price ---
       case "PATCH /items/{id}":
         const patchBody = JSON.parse(event.body);
-        const updateResult = await dynamo.send(new UpdateCommand({
-          TableName: tableName,
-          Key: { id: event.pathParameters.id },
-          UpdateExpression: "SET price = :p",            // only update the price field
-          ExpressionAttributeValues: { ":p": patchBody.price }, // bind :p to the new price
-          ReturnValues: "ALL_NEW",                       // return the full updated item
-        }));
+        const updateResult = await dynamo.send(
+          new UpdateCommand({
+            TableName: tableName,
+            Key: { id: event.pathParameters.id },
+            UpdateExpression: "SET price = :p",            // only update the price field
+            ExpressionAttributeValues: { ":p": patchBody.price }, // bind :p to the new price
+            ReturnValues: "ALL_NEW",                       // return the full updated item
+          })
+        );
         body = updateResult.Attributes;
         break;
 
@@ -101,8 +113,10 @@ export const handler = async (event) => {
     }
   } catch (err) {
     statusCode = 400;
-    body = { error: err.message };
+    body = err.message;
+  } finally {
+    body = JSON.stringify(body);
   }
 
-  return { statusCode, body: JSON.stringify(body), headers };
+  return { statusCode, body, headers };
 };
