@@ -6,18 +6,20 @@
 
 By the end of this workshop, you'll have a fully working **REST API** that can **C**reate, **R**ead, **U**pdate, and **D**elete items — all running serverless on AWS (no servers to manage!).
 
-```
-┌──────────────┐       ┌───────────────┐       ┌──────────┐       ┌───────────┐
-│  You         │       │  API Gateway  │       │  Lambda  │       │ DynamoDB  │
-│  (browser /  │──────▶│  (HTTP API    │──────▶│  (your   │──────▶│ (NoSQL    │
-│   curl)      │◀──────│   router)     │◀──────│   code)  │◀──────│  database)│
-└──────────────┘       └───────────────┘       └──────────┘       └───────────┘
+```mermaid
+graph LR
+    Client["Client\n(browser / curl)"] --> API["REST API\n(API Gateway)"]
+    API --> Lambda["Lambda\nfunction"]
+    Lambda --> DB["Items Table\n(DynamoDB)"]
+    Lambda -.-> IAM["Permissions\nPolicy (IAM)"]
 ```
 
-**In plain English:**
-- **API Gateway** receives your HTTP request and routes it to the right Lambda function
-- **Lambda** runs your JavaScript code on-demand (you only pay when it runs)
-- **DynamoDB** stores your data in a fast, scalable NoSQL database
+> This workshop uses three AWS **services** (API Gateway, Lambda, DynamoDB) and the **resources** you'll create within them (a REST API, a function, and a table). The IAM Permissions Policy grants your Lambda function access to DynamoDB.
+
+**The services:**
+- **[API Gateway](https://aws.amazon.com/api-gateway/)** — the *front door* for your application. Receives HTTP requests and routes them to Lambda.
+- **[Lambda](https://aws.amazon.com/lambda/)** — the *compute* service. Runs your JavaScript code on-demand without servers (you only pay when it runs).
+- **[DynamoDB](https://aws.amazon.com/dynamodb/)** — the *database*. A fully managed NoSQL key/value data store that scales automatically.
 
 ## Prerequisites
 
@@ -80,17 +82,41 @@ Use these during the workshop (make sure your region is set to **ap-southeast-1 
 | CloudWatch Logs | [console.aws.amazon.com/cloudwatch](https://console.aws.amazon.com/cloudwatch/) |
 | IAM (Permissions) | [console.aws.amazon.com/iam](https://console.aws.amazon.com/iam/) |
 
+## Key Concepts
+
+> **Services vs Resources:** A *service* (e.g. Lambda) is the AWS platform you use. A *resource* (e.g. a Lambda *function*) is a specific thing you create within that service. When someone says "my Lambda," they usually mean their Lambda *function*.
+
+**DynamoDB concepts:**
+- **Item** — a single record in the table (like a row in SQL)
+- **Attribute** — a data field on an item (like a column). Example: `name`, `price`
+- **Partition key** — the primary key that uniquely identifies each item. Ours is `id` (String)
+
+**Lambda concepts:**
+- **Handler** — the function AWS calls when your Lambda is triggered: `export const handler = async (event, context) => { ... }`
+- **`event`** — contains the request data (HTTP method, body, path parameters, query strings)
+- **`context`** — contains runtime info (request ID, function name, memory limit, remaining time)
+- **Cold start** — the first invocation takes longer because AWS must initialize the runtime. Subsequent calls to the same instance are "warm."
+
+**Function Logs** (you'll see these in CloudWatch and the Lambda test console):
+- **START** — the function was invoked. Shows the request ID and version (`$LATEST`).
+- **END** — the function finished (success or error).
+- **REPORT** — performance summary: Duration, Billed Duration, Memory Size, Max Memory Used, and Init Duration (cold start only).
+
 ## Key AWS Resources
 
 These are the exact names used throughout the workshop — use them to follow along:
 
-| Resource | Name | What It Is |
-|----------|------|------------|
-| Lambda Function | `hello-serverless` | Your serverless function that runs the code |
-| DynamoDB Table | `http-crud-tutorial-items` | Database table (partition key: `id`, type: String) |
-| API Gateway | `hello-api` | HTTP API that routes requests to your Lambda |
-| Runtime | Node.js 20.x | JavaScript runtime for Lambda |
-| Region | `ap-southeast-1` (Singapore) | AWS datacenter closest to the Philippines |
+| Service | Resource You Create | Name |
+|---------|-------------------|------|
+| Lambda | Function | `hello-serverless` |
+| DynamoDB | Table | `http-crud-tutorial-items` (partition key: `id`, String) |
+| API Gateway | HTTP API | `hello-api` |
+| IAM | Permissions Policy | `AmazonDynamoDBFullAccess` (attached to Lambda's role) |
+
+| Setting | Value |
+|---------|-------|
+| Runtime | Node.js 20.x |
+| Region | `ap-southeast-1` (Singapore) — closest to the Philippines |
 
 ## Clean-Up Instructions
 
