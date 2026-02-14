@@ -1,3 +1,34 @@
+// Session 4: Full CRUD API
+//
+// This is the final version of our Lambda handler. It handles all 4 CRUD operations
+// using a single function. API Gateway tells us which route was called via `event.routeKey`.
+//
+// Routes handled:
+//   GET    /items       → List all items        (ScanCommand)
+//   GET    /items/{id}  → Get one item by ID    (GetCommand)
+//   PUT    /items       → Create/replace item   (PutCommand)
+//   DELETE /items/{id}  → Delete item by ID     (DeleteCommand)
+//
+// How routing works:
+//   API Gateway sets `event.routeKey` to a string like "GET /items/{id}".
+//   We use a switch statement to run the right database operation for each route.
+//
+// Testing with curl (replace YOUR-API-ID with your actual API Gateway URL):
+//
+//   # Create an item
+//   curl -X PUT "https://YOUR-API-ID.execute-api.ap-southeast-1.amazonaws.com/items" \
+//     -H "Content-Type: application/json" \
+//     -d '{"id": "1", "name": "Laptop", "price": 999}'
+//
+//   # List all items
+//   curl "https://YOUR-API-ID.execute-api.ap-southeast-1.amazonaws.com/items"
+//
+//   # Get one item
+//   curl "https://YOUR-API-ID.execute-api.ap-southeast-1.amazonaws.com/items/1"
+//
+//   # Delete an item
+//   curl -X DELETE "https://YOUR-API-ID.execute-api.ap-southeast-1.amazonaws.com/items/1"
+
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
@@ -17,8 +48,10 @@ export const handler = async (event) => {
   const headers = { "Content-Type": "application/json" };
 
   try {
+    // event.routeKey is set by API Gateway, e.g. "GET /items" or "DELETE /items/{id}"
     switch (event.routeKey) {
       case "DELETE /items/{id}":
+        // event.pathParameters.id contains the {id} from the URL
         await dynamo.send(new DeleteCommand({
           TableName: tableName,
           Key: { id: event.pathParameters.id },
