@@ -15,6 +15,8 @@ graph LR
 ```
 
 > This workshop uses three AWS **services** (API Gateway, Lambda, DynamoDB) and the **resources** you'll create within them (a REST API, a function, and a table). The IAM Permissions Policy grants your Lambda function access to DynamoDB.
+>
+> This is an **event-driven architecture (EDA)** — when a client sends an HTTP request, API Gateway produces an *event* that triggers your Lambda function. Lambda processes the event and interacts with DynamoDB. Each service reacts to events rather than polling or waiting, which is the foundation of how serverless solutions work.
 
 **The services:**
 - **[API Gateway](https://aws.amazon.com/api-gateway/)** — the *front door* for your application. Receives HTTP requests and routes them to Lambda.
@@ -113,6 +115,8 @@ These are the exact names used throughout the workshop — use them to follow al
 | API Gateway | HTTP API | `hello-api` |
 | IAM | Permissions Policy | `AmazonDynamoDBFullAccess` (attached to Lambda's role) |
 
+> **Permissions note:** `AmazonDynamoDBFullAccess` grants your Lambda function full access to all DynamoDB tables. This is fine for a workshop, but in a production app you should follow the **principle of least privilege** — create a custom policy that only allows access to the specific table and operations your function needs. See the [AWS Lambda best practices](https://docs.aws.amazon.com/lambda/latest/dg/best-practices.html) for more on permissions.
+
 | Setting | Value |
 |---------|-------|
 | Runtime | Node.js 20.x |
@@ -150,6 +154,7 @@ The code in this repo follows [AWS Lambda best practices](https://docs.aws.amazo
 - [Amazon API Gateway Developer Guide](https://docs.aws.amazon.com/apigateway/latest/developerguide/welcome.html)
 - [Amazon DynamoDB Developer Guide](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
 - [AWS SDK for JavaScript v3](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/)
+- [AWS Serverless Developer Guide](https://docs.aws.amazon.com/serverless/latest/devguide/welcome.html) — core concepts, event-driven architecture, and best practices for building serverless applications
 - [Serverless Land — Patterns](https://serverlessland.com/patterns) — real-world serverless architecture patterns
 - [AWS Serverless Patterns Workshop](https://catalog.workshops.aws/serverless-patterns/en-US) — advanced hands-on labs
 - [AWS Free Tier](https://aws.amazon.com/free/)
