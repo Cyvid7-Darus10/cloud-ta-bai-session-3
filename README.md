@@ -27,13 +27,24 @@ By the end of this workshop, you'll have a fully working **REST API** that can *
 
 > **No local setup required!** All code runs in the AWS Console. You don't need Node.js, npm, or any IDE on your machine.
 
+## Workshop Guide (Notion)
+
+> **Follow the Notion guide during the workshop — this repo is for reference only.**
+>
+> The Notion page has the full step-by-step instructions, troubleshooting tips, and checkpoints.
+> This repo contains the correct code for each session so you can compare your work or catch up if you fall behind.
+>
+> **[Open the Workshop Guide](https://cyvid7.notion.site/Cloud-Ta-Bai-Session-3-Flying-Light-209f1cdcedf680ac88b0da5f5ba70e23)**
+
 ## How to Use This Repo
 
-Each folder contains the **correct, working code** for that session. Use it to:
+This repo is a **reference companion** to the Notion workshop guide. Use it to:
 
-- **Follow along** — Copy-paste the code if you fall behind during the workshop
 - **Compare your work** — Check your code against the reference if something isn't working
+- **Catch up** — Copy-paste the code if you fall behind during the workshop
 - **Review later** — Come back after the workshop to study how each piece works
+
+> **Tip:** Don't just copy-paste blindly! Try writing the code yourself first — you'll learn more that way. Use this repo to check your work or get unstuck.
 
 ## Workshop Sessions
 
@@ -57,9 +68,21 @@ Once you finish Session 4, your API will support these routes:
 | `DELETE` | `/items/{id}` | Delete an item by ID | — |
 | `PATCH` | `/items/{id}` | Update an item's price (challenge) | `{"price": 799}` |
 
+## AWS Console Quick Links
+
+Use these during the workshop (make sure your region is set to **ap-southeast-1 Singapore**):
+
+| Service | Console Link |
+|---------|-------------|
+| Lambda | [console.aws.amazon.com/lambda](https://console.aws.amazon.com/lambda/) |
+| API Gateway | [console.aws.amazon.com/apigateway](https://console.aws.amazon.com/apigateway/) |
+| DynamoDB | [console.aws.amazon.com/dynamodb](https://console.aws.amazon.com/dynamodb/) |
+| CloudWatch Logs | [console.aws.amazon.com/cloudwatch](https://console.aws.amazon.com/cloudwatch/) |
+| IAM (Permissions) | [console.aws.amazon.com/iam](https://console.aws.amazon.com/iam/) |
+
 ## Key AWS Resources
 
-These are the names used throughout the workshop. Use these exact names to follow along:
+These are the exact names used throughout the workshop — use them to follow along:
 
 | Resource | Name | What It Is |
 |----------|------|------------|
@@ -68,12 +91,6 @@ These are the names used throughout the workshop. Use these exact names to follo
 | API Gateway | `hello-api` | HTTP API that routes requests to your Lambda |
 | Runtime | Node.js 20.x | JavaScript runtime for Lambda |
 | Region | `ap-southeast-1` (Singapore) | AWS datacenter closest to the Philippines |
-
-## Workshop Guide
-
-Follow the full step-by-step guide on Notion:
-
-**[Cloud Ta Bai Session 3 — Workshop Guide](https://cyvid7.notion.site/Cloud-Ta-Bai-Session-3-Flying-Light-209f1cdcedf680ac88b0da5f5ba70e23)**
 
 ## Clean-Up Instructions
 
@@ -93,3 +110,5 @@ Go to the AWS Console in the `ap-southeast-1` (Singapore) region and delete in t
 - [Amazon DynamoDB Developer Guide](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
 - [AWS SDK for JavaScript v3](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/)
 - [AWS Free Tier](https://aws.amazon.com/free/)
+- [AWS CRUD HTTP API Tutorial](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-dynamo-db.html) — the official tutorial this workshop is based on
+- [Serverless Land — Patterns](https://serverlessland.com/patterns) — real-world serverless architecture patterns
